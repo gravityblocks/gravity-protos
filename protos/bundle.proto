@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package bundle;
+
+import "packet.proto";
+import "shared.proto";
+
+message JitoBundle {
+  shared.Header header = 1;
+  // 32-byte identity of the validator that sent this bundle
+  bytes identity_address = 2;
+  // 32-byte identifier of the bundle
+  bytes bundle_id = 3;
+  repeated packet.Packet packets = 4;
+}
