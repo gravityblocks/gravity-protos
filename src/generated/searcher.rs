@@ -11,6 +11,22 @@ pub struct PendingTxNotification {
 }
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct BundleSubscription {}
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct OracleUpdate {
+    /// Chosen by the sender. A later update with the same id from the same
+    /// searcher replaces this one.
+    #[prost(uint64, tag = "1")]
+    pub replacement_id: u64,
+    /// Within a replacement_id, the highest seq wins.
+    #[prost(uint64, tag = "2")]
+    pub seq: u64,
+    /// Wire-format transaction. Every instruction must target an enrolled
+    /// program or the compute budget program.
+    #[prost(bytes = "bytes", tag = "3")]
+    pub transaction: ::prost::bytes::Bytes,
+}
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct SendOracleUpdateResponse {}
 /// Generated client implementations.
 pub mod searcher_service_client {
     #![allow(
@@ -151,6 +167,31 @@ pub mod searcher_service_client {
                 .insert(GrpcMethod::new("searcher.SearcherService", "SubscribeBundles"));
             self.inner.server_streaming(req, path, codec).await
         }
+        /// For searchers enrolled for oracle updates only
+        pub async fn send_oracle_update(
+            &mut self,
+            request: impl tonic::IntoRequest<super::OracleUpdate>,
+        ) -> std::result::Result<
+            tonic::Response<super::SendOracleUpdateResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/searcher.SearcherService/SendOracleUpdate",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("searcher.SearcherService", "SendOracleUpdate"));
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -194,6 +235,14 @@ pub mod searcher_service_server {
             request: tonic::Request<super::BundleSubscription>,
         ) -> std::result::Result<
             tonic::Response<Self::SubscribeBundlesStream>,
+            tonic::Status,
+        >;
+        /// For searchers enrolled for oracle updates only
+        async fn send_oracle_update(
+            &self,
+            request: tonic::Request<super::OracleUpdate>,
+        ) -> std::result::Result<
+            tonic::Response<super::SendOracleUpdateResponse>,
             tonic::Status,
         >;
     }
@@ -363,6 +412,52 @@ pub mod searcher_service_server {
                                 max_encoding_message_size,
                             );
                         let res = grpc.server_streaming(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/searcher.SearcherService/SendOracleUpdate" => {
+                    #[allow(non_camel_case_types)]
+                    struct SendOracleUpdateSvc<T: SearcherService>(pub Arc<T>);
+                    impl<
+                        T: SearcherService,
+                    > tonic::server::UnaryService<super::OracleUpdate>
+                    for SendOracleUpdateSvc<T> {
+                        type Response = super::SendOracleUpdateResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::OracleUpdate>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as SearcherService>::send_oracle_update(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = SendOracleUpdateSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

@@ -28,8 +28,23 @@ message PendingTxNotification {
 
 message BundleSubscription {}
 
+message OracleUpdate {
+  // Chosen by the sender. A later update with the same id from the same
+  // searcher replaces this one.
+  uint64 replacement_id = 1;
+  // Within a replacement_id, the highest seq wins.
+  uint64 seq = 2;
+  // Wire-format transaction. Every instruction must target an enrolled
+  // program or the compute budget program.
+  bytes transaction = 3;
+}
+
+message SendOracleUpdateResponse {}
+
 service SearcherService {
   rpc SubscribeMempool(MempoolSubscription) returns (stream PendingTxNotification) {}
   // Transaction signatures are zeroed before bundles are emitted
   rpc SubscribeBundles(BundleSubscription) returns (stream bundle.JitoBundle) {}
+  // For searchers enrolled for oracle updates only
+  rpc SendOracleUpdate(OracleUpdate) returns (SendOracleUpdateResponse) {}
 }

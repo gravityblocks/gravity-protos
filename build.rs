@@ -11,6 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .bytes(".bundle.JitoBundle.bundle_id")
         .bytes(".bundle.JitoBundle.identity_address")
         .bytes(".searcher.PendingTxNotification.identity_address")
+        .bytes(".searcher.OracleUpdate.transaction")
         .out_dir("src/generated")
         .compile_protos(
             &[
